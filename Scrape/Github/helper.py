@@ -15,14 +15,6 @@ DataNeeded = [
 
 class Helper(object):
 
-    def _save(*args, **kwargs) -> None:
-        
-        data = kwargs.get('data')
-        filename = data['filename']
-        json_data = data['extracted_data']
-        with open('{}.json'.format(filename), 'w') as f:
-            json.dump(json_data, f, indent=True)
-        print(f'Data saved to {filename}.json')
     
     def _extract(*args, **kwargs) -> dict:
         DataFromGithub = kwargs['data']

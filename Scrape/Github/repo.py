@@ -19,9 +19,9 @@ if not github:
 
 payload = {}
 headers = {
-    'Accept': 'application/vnd.github+json',
-    'Authorization': github,
-    'X-GitHub-Api-Version': '2022-11-28'
+  'Accept': 'application/vnd.github+json',
+  'Authorization': f'Bearer {github}',
+  'X-GitHub-Api-Version': '2022-11-28'
 }
 
 
@@ -46,29 +46,25 @@ class GithubFetcher:
         
         # Save the top repositories to a JSON file
         try:
-            top_repos = repos[:limit]
-            # Extract only the required information
+            top_repos = repos[:3]
+            # Extract only the req
+            # uired information
             simplified_repos = []
             for repo in top_repos:
-                simplified_repo = {
+                simplified = {
                     'name': repo['name'],
                     'html_url': repo['html_url'],
                     'language': repo['language'],
                     'topics': repo['topics'],
                     'readme': self.fetch_readme(repo['name'])
                 }
-                simplified_repos.append(simplified_repo)
-                # Print progress
-                print(f"Fetched info and README for: {repo['name']}")
+                simplified_repos.append(simplified)
+            print(f"Fetched info and README of: {self.username}")
 
-                if simplified_repo:
-                    # Save all info in single json file
-                    with open(f"{self.username}_repo_info.json", 'w') as f:
-                        json.dump(simplified_repo, f, indent=4)
-                    
-                else:
-                    print("No repositories found.")
-
+            if simplified_repos:
+                return simplified_repos    
+            else:
+                print("No repositories found.")
                 print(f"Top repositories info and READMEs saved to {self.username}_repo_info.json")
 
         except Exception as e:
@@ -99,16 +95,4 @@ class GithubFetcher:
 # if __name__ == '__main__':
 #     username='harshkasat'
 #     fetcher = GithubFetcher(username)
-
-#     print(f"Fetching top repositories info and READMEs for {username}...")
-
 #     repo_info = fetcher.fetch_repo_info()
-
-#     if repo_info:
-#         # Save all info in single json file
-#         with open(f"{username}_repo_info.json", 'w') as f:
-#             json.dump(repo_info, f, indent=4)
-        
-#         print(f"Top repositories info and READMEs saved to {username}_repo_info.json")
-#     else:
-#         print("No repositories found.")

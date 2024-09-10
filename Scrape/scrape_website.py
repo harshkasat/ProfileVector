@@ -30,11 +30,15 @@ class Website:
             return data['blog']
 
     def parse_website(self, url):
-        # URL of the website to scrape
-        # url = "https://machoharsh-tech.vercel.app/"
 
         # Send a GET request
-        response = requests.get(url)
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()  # This will raise an exception for HTTP errors
+        except requests.exceptions.RequestException as e:
+            print(f"Failed to fetch the website: {e}")
+            return None
+
         soup = BeautifulSoup(response.text, 'html.parser')
 
         # Extracting data
@@ -62,9 +66,9 @@ class Website:
         # Validate with Pydantic
         try:
             scraped_data = ScrapedData(**data)
-            with open(f'{self.username}-website.json', 'w') as f:
-                json.dump(scraped_data.model_dump(), f, indent=4)
-            print(f"Data successfully saved to {self.username}-website.json .")
+            scraped_data = scraped_data.model_dump_json()
+            print(f"Website successfully parsed.")
+            return scraped_data
         except Exception as e:
             print(f"Error: {e}")
 

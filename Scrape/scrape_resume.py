@@ -84,23 +84,14 @@ def parse_resume(text: str) -> Resume:
         experience=experience,
         skills=skills,
         other=sections["other"] if sections["other"].strip() else None
-    )
+    ).model_dump_json()
 
-def save_to_json(resume: Resume, username):
-    output_path = f"{username}-resume.json"
-    with open(output_path, 'w') as f:
-        json.dump(resume.model_dump(), f, indent=2)
 
 
 # if __name__ == "__main__":
 #     # Usage
 #     username = 'harshkasat'
 #     pdf_path = "C:/Users/Zedmat/Downloads/Harsh Resume.pdf"
-#     output_json_path = f"{username}-resume.json"
 
 #     raw_text = extract_text_from_pdf(pdf_path)
 #     parsed_resume = parse_resume(raw_text)
-#     save_to_json(parsed_resume, username)
-
-#     print(f"Resume parsed and saved to {output_json_path}")
-#     print(parsed_resume.model_dump_json(indent=2))
