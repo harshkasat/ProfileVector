@@ -12,11 +12,6 @@ class Link(BaseModel):
     text: str
     url: str
 
-class ScrapedData(BaseModel):
-    headings: List[Heading]
-    paragraphs: List[str]
-    links: List[Link]
-
 
 class Website:
 
@@ -45,28 +40,20 @@ class Website:
         headings = []
         for i in range(1, 7):
             for heading in soup.find_all(f'h{i}'):
-                headings.append({"text": heading.text.strip()})
+                headings.append(f"text: {heading.text.strip()}")
 
         paragraphs = [para.text.strip() for para in soup.find_all('p')]
 
         links = []
         for link in soup.find_all('a'):
-            links.append({
-                "text": link.text.strip(),
-                "url": link.get('href')
-            })
+            links.append(f"text: {link.text.strip()}, url: {link.get('href')}")
 
         # Combine into the structure for Pydantic validation
-        data = {
-            "headings": headings,
-            "paragraphs": paragraphs,
-            "links": links,
-        }
+        data = f""" headings: {headings}, paragraphs: {paragraphs}, links: {links}"""
 
         # Validate with Pydantic
         try:
-            scraped_data = ScrapedData(**data)
-            scraped_data = scraped_data.model_dump_json()
+            scraped_data = data
             print(f"Website successfully parsed.")
             return scraped_data
         except Exception as e:

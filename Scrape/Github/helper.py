@@ -22,5 +22,8 @@ class Helper(object):
         for (k, v) in DataFromGithub.items():
             if k in DataNeeded:
                 Data[k] = v
+                if k == 'blog':
+                    Data['personal website'] = vnew
         
+        print(f"User Info successfully extracted.")
         return Data

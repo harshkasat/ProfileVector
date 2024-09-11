@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal Interface - API Integration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        :root {
+            --background: 0 0% 0%;
+            --foreground: 0 0% 94%;
+            --card: 0 0% 3%;
+            --card-foreground: 0 0% 94%;
+            --popover: 0 0% 3%;
+            --popover-foreground: 0 0% 94%;
+            --primary: 0 0% 94%;
+            --primary-foreground: 0 0% 0%;
+            --secondary: 0 0% 13%;
+            --secondary-foreground: 0 0% 94%;
+            --muted: 0 0% 13%;
+            --muted-foreground: 0 0% 64%;
+            --accent: 0 0% 13%;
+            --accent-foreground: 0 0% 94%;
+            --destructive: 0 85% 60%;
+            --destructive-foreground: 0 0% 94%;
+            --border: 0 0% 13%;
+            --input: 0 0% 13%;
+            --ring: 0 0% 74%;
+            --radius: 0.5rem;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-black text-gray-100 font-mono">
+    <div class="flex flex-col h-screen">
+        <div id="terminal-output" class="flex-1 p-4 overflow-auto">
+            <div class="space-y-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-gray-500">user@terminal</span>
+                    <span class="text-green-500">~</span>
+                    <span class="text-gray-100">$</span>
+                    <span class="text-cyan-400">echo "Welcome to the API-integrated terminal!"</span>
+                </div>
+                <div class="text-cyan-400">Welcome to the API-integrated terminal!</div>
+            </div>
+        </div>
+        <div class="bg-gray-900 px-4 py-2 flex items-center gap-2">
+            <span class="text-gray-500">user@terminal</span>
+            <span class="text-green-500">~</span>
+            <span class="text-gray-100">$</span>
+            <input id="terminal-input" class="bg-transparent border-none outline-none text-gray-100 flex-1" type="text" />
+        </div>
+    </div>
+
+    <script>
+        const terminalOutput = document.getElementById('terminal-output');
+        const terminalInput = document.getElementById('terminal-input');
+
+        terminalInput.addEventListener('keypress', async function(e) {
+            if (e.key === 'Enter') {
+                const input = this.value;
+                this.value = '';
+
+                // Display user input
+                appendToTerminal(`<div class="flex items-center gap-2">
+                    <span class="text-gray-500">user@terminal</span>
+                    <span class="text-green-500">~</span>
+                    <span class="text-gray-100">$</span>
+                    <span class="text-cyan-400">${input}</span>
+                </div>`);
+
+                try {
+                    const response = await fetch('http://127.0.0.1:8000/questions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ question: input }),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    appendToTerminal(`<div class="text-gray-100">${data.response}</div>`);
+                } catch (error) {
+                    appendToTerminal(`<div class="text-red-500">Error: ${error.message}</div>`);
+                }
+            }
+        });
+
+        function appendToTerminal(content) {
+            const div = document.createElement('div');
+            div.innerHTML = content;
+            terminalOutput.appendChild(div);
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        }
+    </script>
+</body>
+</html>

@@ -106,14 +106,16 @@ def parse_resume(file_path):
     # Extract any remaining text as "Other Info"
     other_info = extract_other_info(text, parsed_sections)
 
-    print("Resume details successfully parsed")
-    return f"Contact Info : {contact_info}, Education : {education}, Experience: {experience}, Skills : {skills}, Other Info: {other_info}"
+    return {
+        "Contact Info": contact_info,
+        "Education": education,
+        "Experience": experience,
+        "Skills": skills,
+        "Other Info": other_info
+    }
 
-
-# if __name__ == "__main__":
-#     # Usage
-#     username = 'harshkasat'
-#     pdf_path = "C:/Users/Zedmat/Downloads/Harsh Resume.pdf"
-
-#     raw_text = extract_text_from_pdf(pdf_path)
-#     parsed_resume = parse_resume(raw_text)
+# Example usage
+if __name__ == "__main__":
+    file_path = "C:/Users/Zedmat/Downloads/Harsh Resume.pdf"  # Replace with the path to your PDF resume
+    parsed_resume = parse_resume(file_path)
+    print(parsed_resume)
