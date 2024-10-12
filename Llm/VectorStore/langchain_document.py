@@ -1,4 +1,3 @@
-import json
 from langchain.schema import Document
 
 
@@ -9,27 +8,16 @@ class CreateDocument(object):
     
     def user_documents(user_data):
         # User Information
-        for key, value in user_data.items():
-            documents.append(Document(
-                page_content=f"{key}: {value}",
-                metadata={"source": "user_info"}
-            ))
+        documents.append(Document(
+            page_content=user_data,
+            metadata={"source": "user_info"}
+        ))
     
     def repo_documents(repo_data):
         # Repository Information
-        for repo in repo_data:
-            documents.append(Document(
-                page_content=repo,
-                metadata={"source": "repository name, repository url, language, topics, README information"}))
-            # documents.append(Document(
-            #      page_content=repo_content,
-            #      metadata={"source": "repository name, repository url, language, topics"}
-            # ))
-            # repo_content = f" Repository: {repo['name']}\n URL: {repo['html_url']}\n Language: {repo['language']}\n Topics: {', '.join(repo['topics'])}\n README: {repo['readme']}"
-            # documents.append(Document(
-            #     page_content=repo_content,
-            #     metadata={"source": "repository name, repository url, language, topics README information"}
-            # ))
+        documents.append(Document(
+            page_content=repo_data,
+            metadata={"source": "repository name, repository url, language, topics, README information"}))
     
     def website_documents(website_content):
         # Website Content

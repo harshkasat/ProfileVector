@@ -42,20 +42,15 @@ class GithubFetcher:
         # Save the top repositories to a list
         try:
             top_repos = repos[:limit]
-            simplified_repos = []
+            simplified_repos = ""
 
             for repo in top_repos:
                 if isinstance(repo, dict):
-                    simplified = (
-                        f"Repository: {repo.get('name', 'N/A')}\n"
-                        f"URL: {repo.get('html_url', 'N/A')}\n"
-                        f"Language: {repo.get('language', 'N/A')}\n"
-                        f"Topics: {', '.join(repo.get('topics', [])) if repo.get('topics') else 'None'}\n"
-                    )
+                    simplified = f"Repository: {repo.get('name', 'N/A')}\n URL: {repo.get('html_url', 'N/A')}\n Language: {repo.get('language', 'N/A')}\n Topics: {', '.join(repo.get('topics', [])) if repo.get('topics') else 'None'}\n"
                     # Fetch README separately
                     readme_content = self.fetch_readme(repo.get('name', ''))
-                    simplified += f"README: {readme_content}" if readme_content else "README: Not available"
-                    simplified_repos.append(simplified)
+                    simplified += f"README {readme_content}" if readme_content else "README: Not available"
+                    simplified_repos += simplified
                 else:
                     print(f"Unexpected data format: {repo}")
 

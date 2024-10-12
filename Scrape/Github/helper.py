@@ -16,14 +16,17 @@ DataNeeded = [
 class Helper(object):
 
     
-    def _extract(*args, **kwargs) -> dict:
+    def _extract(*arg, **kwargs) -> dict:
         DataFromGithub = kwargs['data']
-        Data = {}
+        DataFromGithubSocial = kwargs['social_links']
+        Data = ""
+        Data += f"twitter {DataFromGithubSocial['twitter_url']} \n"
+        Data += f"linkedin {DataFromGithubSocial['linkedin_url']} \n"
         for (k, v) in DataFromGithub.items():
             if k in DataNeeded:
-                Data[k] = v
+                Data += f" {k} {v} \n"
                 if k == 'blog':
-                    Data['personal website'] = vnew
-        
+                    Data += f'personal website {v} \n'
         print(f"User Info successfully extracted.")
         return Data
+ 

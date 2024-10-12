@@ -1,70 +1,87 @@
-from langchain.schema.runnable import RunnablePassthrough
-from langchain.schema import StrOutputParser
-from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain_community.chat_message_histories import ChatMessageHistory
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain.chains import create_history_aware_retriever, create_retrieval_chain
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain_core.messages import HumanMessage, AIMessage
+
 
 from Llm.VectorStore.pinecone import load_vector_store
 from Llm.config import configure_embedding, configure_llm, configure_prompt_template
 
 
-store ={}
-def get_session_history(session_id: str):
-    if session_id not in store:
-        store[session_id] = ChatMessageHistory()
-    return store[session_id]
 
-session_id = "bcd"
+class RetrievalChain:
+    def __init__(self, username) -> None: 
+        self.embedd_model = configure_embedding()
+        self.llm_prompt = configure_prompt_template()
+        self.llm = configure_llm()
+        self.vstore = load_vector_store(embeddings=self.embedd_model, index_name=username)
+        self.chat_history = []
+    
+    def _retrieve_vstore(self):
+        retriever = self.vstore.as_retriever(
+        search_type="mmr",
+        search_kwargs={'k': 6, 'lambda_mult': 0.4}
+        )
 
-# Configure the embedding model
-embedd_model =  configure_embedding()
+        # retriever = vstore.as_retriever(
+        # search_type="similarity_score_threshold",
+        # search_kwargs={'score_threshold': 0.1}
+        # )
 
-# Configure the prompt template
-llm_prompt = configure_prompt_template()
+        # retriever = vstore.as_retriever(search_kwargs={'k': 5})
 
-# Configure the llm model
-llm = configure_llm()
+        if retriever is None or self.llm_prompt is None or self.llm is None:
+            raise ValueError("One or more components (retriever, llm_prompt, llm) are None")
+        return retriever
 
-username = 'harshkasat'
-vstore = load_vector_store(embeddings=embedd_model, index_name=username)
+    def _history_retrieval_chain(self):
+        ### Contextualize question ###
+        contextualize_q_system_prompt = (
+            "Given a chat history and the latest user question "
+            "which might reference context in the chat history, "
+            "formulate a standalone question which can be understood "
+            "without the chat history. Do NOT answer the question, "
+            "just reformulate it if needed and otherwise return it as is."
+        )
+        contextualize_q_prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", contextualize_q_system_prompt),
+                MessagesPlaceholder("chat_history"),
+                ("human", "{input}"),
+            ]
+        )
+        history_aware_retriever = create_history_aware_retriever(
+            self.llm, self._retrieve_vstore(), contextualize_q_prompt
+        )
 
-# retriever = vstore.as_retriever(
-#     search_type="similarity_score_threshold",
-#     search_kwargs={'score_threshold': 0.1}
-# )
+        ### Answer question ###
+        system_prompt = (
+            "You are an assistant for question-answering tasks. "
+            "Use the following pieces of retrieved context to answer "
+            "the question. If you don't know the answer, say that you "
+            "don't know. Use three sentences maximum and keep the "
+            "answer concise."
+            "\n\n"
+            "{context}"
+        )
+        qa_prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", system_prompt),
+                MessagesPlaceholder("chat_history"),
+                ("human", "{input}"),
+            ]
+        )
+        question_answer_chain = create_stuff_documents_chain(self.llm, qa_prompt)
 
-# retriever = vstore.as_retriever(
-#         search_type="mmr",
-#         search_kwargs={'k': 5, 'lambda_mult': 0.3}
-#     )
-retriever = vstore.as_retriever(search_kwargs={'k': 1})
+        chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)
+        print("Chain created successfully")
 
-# Check if all components are properly defined
-if retriever is None or llm_prompt is None or llm is None:
-    raise ValueError("One or more components (retriever, llm_prompt, llm) are None")
+        return chain
 
-def format_docs(docs):
-    return "\n\n".join(doc.page_content for doc in docs)
+    def _retrieve_and_answer(self, user_question):
+        # result = self._history_retrieval_chain.rag_chain.invoke({"input": user_question, "chat_history": self.chat_history})
+        result = self._history_retrieval_chain().invoke({"input": user_question, "chat_history":self.chat_history})
+        self.chat_history.append(HumanMessage(content=user_question))
+        self.chat_history.append(AIMessage(content=result["answer"]))
 
-rag_chain = (
-    {"context": retriever | format_docs, "question": RunnablePassthrough()}
-    | llm_prompt
-    | llm
-    | StrOutputParser()
-)
-
-chain_with_history = RunnableWithMessageHistory(
-        rag_chain,
-        get_session_history,
-        input_messages_key="query",
-        history_messages_key="history"
-    )
-
-
-
-# if __name__ == '__main__':
-
-#     while True:
-#         question = input(str("What questions do you want to ask (To quit use 'exit' or 'q')? "))
-#         if question.lower() == "exit" or question.lower() == 'q':
-#             break
-#         print(chain_with_history.invoke(question))
+        return result["answer"]

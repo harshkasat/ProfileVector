@@ -15,20 +15,15 @@ class Link(BaseModel):
 
 class Website:
 
-    def __init__(self, username):
-        self.username = username
+    def __init__(self, url):
+        self.url = url
     
 
-    def read_data(self):
-        with open(f'{self.username}.json', 'r') as f:
-            data = json.load(f)
-            return data['blog']
-
-    def parse_website(self, url):
+    def parse_website(self):
 
         # Send a GET request
         try:
-            response = requests.get(url, timeout=10)
+            response = requests.get(self.url, timeout=10)
             response.raise_for_status()  # This will raise an exception for HTTP errors
         except requests.exceptions.RequestException as e:
             print(f"Failed to fetch the website: {e}")
@@ -37,28 +32,34 @@ class Website:
         soup = BeautifulSoup(response.text, 'html.parser')
 
         # Extracting data
-        headings = []
+        headings = ""
+        paragraphs = ""
+        links = ""
+        
         for i in range(1, 7):
             for heading in soup.find_all(f'h{i}'):
-                headings.append(f"text: {heading.text.strip()}")
+                headings += heading.text.strip() + '\n'
 
-        paragraphs = [para.text.strip() for para in soup.find_all('p')]
+        for para in soup.find_all('p'):
+            paragraphs += para.text.strip() + '\n'
 
-        links = []
         for link in soup.find_all('a'):
-            links.append(f"text: {link.text.strip()}, url: {link.get('href')}")
+            links += f"text: {link.text.strip()}, url: {link.get('href')} \n" 
 
         # Combine into the structure for Pydantic validation
-        data = f""" headings: {headings}, paragraphs: {paragraphs}, links: {links}"""
+        scraped_data = f""" headings: {headings}, paragraphs: {paragraphs}, links: {links}"""
 
         # Validate with Pydantic
         try:
-            scraped_data = data
             print(f"Website successfully parsed.")
             return scraped_data
         except Exception as e:
             print(f"Error: {e}")
 
-# if __name__ == "__main__":
-#     username = 'harshkasat'
+# if __name__ == '__main__':
+#     # Example usage
+#     url  = 'https://machoharsh-tech.vercel.app/'
+#     website = Website(url)
+#     scraped_data = website.parse_website()
+#     print(scraped_data)
     
