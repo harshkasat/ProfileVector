@@ -49,15 +49,15 @@ def parsed_documents(username, pdf_path, website_url):
     return extracted_data, repo_info, parsed_website, raw_text
 
 
-def main():
-    username='harshkasat'
-    pdf_path = "C:/Users/Zedmat/Downloads/Harsh Resume.pdf"
-    website_url = 'https://machoharsh-tech.vercel.app/'
+# def main():
+#     username='harshkasat'
+#     pdf_path = "C:/Users/Zedmat/Downloads/Harsh Resume.pdf"
+#     website_url = 'https://machoharsh-tech.vercel.app/'
 
-    # Parse documents
-    extracted_data, repo_info, parsed_website, raw_text = parsed_documents(username, pdf_path, website_url)
-    vector_document(username, extracted_data, repo_info, parsed_website, raw_text)
+#     # Parse documents
+#     extracted_data, repo_info, parsed_website, raw_text = parsed_documents(username, pdf_path, website_url)
+#     vector_document(username, extracted_data, repo_info, parsed_website, raw_text)
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()

@@ -3,6 +3,19 @@
 import { useState, useEffect, useRef } from 'react'
 import { Terminal } from 'lucide-react'
 
+function formatText(text: string) {
+  // Replace **bold** with <strong>bold</strong>
+  text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+  
+  // Replace URLs with clickable links
+  text = text.replace(
+    /(https?:\/\/[^\s]+)/g,
+    '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline">$1</a>'
+  )
+  
+  return text
+}
+
 export default function Component() {
   const [messages, setMessages] = useState<string[]>([
     "Welcome to the Zedmate Terminal Chat. How can I assist you today?"
@@ -14,13 +27,24 @@ export default function Component() {
   useEffect(() => {
     // Initialize WebSocket connection
     const ws = new WebSocket('wss://profilevector.onrender.com/ws/questions')
+    // const ws = new WebSocket('ws://127.0.0.1:8000/ws/questions/stream')
     
     ws.onopen = () => {
       console.log('Connected to the server')
     }
     
     ws.onmessage = (event) => {
-      setMessages(prev => [...prev, event.data])
+      setMessages(prev => {
+        const newMessages = [...prev]
+        const lastMessage = newMessages[newMessages.length - 1]
+        if (lastMessage.startsWith('🤖 ')) {
+          // Remove any newline characters and append the new chunk
+          newMessages[newMessages.length - 1] = lastMessage + event.data.replace(/\n/g, ' ')
+        } else {
+          newMessages.push('🤖 ' + event.data.replace(/\n/g, ' '))
+        }
+        return newMessages
+      })
     }
     
     ws.onerror = (error) => {
@@ -64,9 +88,11 @@ export default function Component() {
         </div>
         <div className="h-96 overflow-y-auto p-4 space-y-2">
           {messages.map((msg, index) => (
-            <div key={index} className={`text-sm ${msg.startsWith('>') ? 'text-blue-400' : 'text-green-400'}`}>
-              {msg}
-            </div>
+            <div 
+              key={index} 
+              className={`text-sm ${msg.startsWith('>') ? 'text-blue-400' : 'text-green-400'}`}
+              dangerouslySetInnerHTML={{ __html: formatText(msg) }}
+            />
           ))}
           <div ref={messagesEndRef} />
         </div>

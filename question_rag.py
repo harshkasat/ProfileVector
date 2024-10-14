@@ -79,8 +79,7 @@ class RetrievalChain:
         return chain
 
     def _retrieve_and_answer(self, user_question):
-        # result = self._history_retrieval_chain.rag_chain.invoke({"input": user_question, "chat_history": self.chat_history})
-        result = self._history_retrieval_chain().invoke({"input": user_question, "chat_history":self.chat_history})
+        result = self._history_retrieval_chain.rag_chain.invoke({"input": user_question, "chat_history": self.chat_history})
         self.chat_history.append(HumanMessage(content=user_question))
         self.chat_history.append(AIMessage(content=result["answer"]))
 
