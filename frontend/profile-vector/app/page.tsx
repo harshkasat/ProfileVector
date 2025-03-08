@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 
 export default function Home() {
   const [history, setHistory] = useState<string[]>([
-    'Welcome to Terminal UI v1.0.0',
+    'Welcome to Zed Terminal UI v1.0.0',
     'Type "help" for available commands',
     'Any other input will be sent as a query to the server',
     '',
@@ -13,12 +13,14 @@ export default function Home() {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [socket, setSocket] = useState<WebSocket | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Set up WebSocket connection
   useEffect(() => {
     console.log("Initialize the websocket")
-    const ws = new WebSocket('ws://127.0.0.1:8000/ws/questions/stream');
-    // const ws = new WebSocket('wss://profilevector.onrender.com/ws/questions/stream')
+    
+    // const ws = new WebSocket('ws://127.0.0.1:8000/ws/questions/stream');
+    const ws = new WebSocket('wss://profilevector.onrender.com//ws/questions/stream')
 
     ws.onopen = () => {
       console.log('Connected to WebSocket server');
@@ -26,22 +28,37 @@ export default function Home() {
     };
 
     ws.onmessage = (event) => {
+      setIsLoading(false); // Hide loading indicator
       setHistory(prev => {
         const newHistory = [...prev];
-        const lastMessage = newHistory[newHistory.length - 1];
-          newHistory.push('🤖 ' + event.data.replace(/\n/g, ' '));
-        // }
+        const loadingIndex = newHistory.findIndex(msg => msg.startsWith('🔄 Loading'));
+        if (loadingIndex !== -1) {
+      // Replace loading with actual response
+      newHistory[loadingIndex] = '> ' + event.data;
+    } else {
+      // Check if the last message is from the bot to append to it (for streaming)
+      const lastIndex = newHistory.length - 1;
+      if (lastIndex >= 0 && newHistory[lastIndex].startsWith('> ')) {
+        // Append to existing bot message
+        newHistory[lastIndex] = newHistory[lastIndex] + event.data;
+      } else {
+        // Create a new bot message if no loading or existing bot message
+        newHistory.push('> ' + event.data);
+      }
+    }
         return newHistory;
       });
     };
     
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
+      setIsLoading(false); // Hide loading indicator on error
       setHistory(prev => [...prev, 'Error: WebSocket connection failed', '']);
     };
     
     ws.onclose = () => {
       console.log('Disconnected from the server');
+      setIsLoading(false); // Hide loading indicator on error
       setHistory(prev => [...prev, 'Disconnected from WebSocket server', '']);
     };
     
@@ -84,8 +101,9 @@ export default function Home() {
       return commands[cmd as keyof typeof commands](argsStr);
     } else {
       // Send to server but don't return anything - the response will come through the WebSocket
+      // setIsLoading(true);
       sendToServer(input);
-      return []; // Return empty array as we don't want to add anything to history yet
+      return ['🔄 Loading...']; // Return loading message
     }
   };
 
@@ -118,13 +136,13 @@ export default function Home() {
     <main 
       className="min-h-screen p-4 font-mono text-sm bg-black text-green-400"
       onClick={() => inputRef.current?.focus()}
-    >
+      >
       <div 
         ref={containerRef}
         className="max-h-screen overflow-auto"
       >
         {history.map((line, i) => (
-          <div key={i} className="whitespace-pre-wrap mb-1">
+          <div key={i} className={`whitespace-pre-wrap mb-1 ${line.startsWith('🔄 Loading') ? 'text-yellow-300 animate-pulse' : ''}`}>
             {line}
           </div>
         ))}
@@ -138,6 +156,7 @@ export default function Home() {
             className="flex-1 bg-transparent outline-none"
             autoFocus
             spellCheck="false"
+            disabled={isLoading} // Optionally disable input while loading
           />
         </form>
       </div>
