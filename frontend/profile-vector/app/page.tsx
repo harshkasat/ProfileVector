@@ -17,8 +17,8 @@ export default function Home() {
   // Set up WebSocket connection
   useEffect(() => {
     console.log("Initialize the websocket")
-    // const ws = new WebSocket('ws://127.0.0.1:8000/ws/questions/stream');
-    const ws = new WebSocket('wss://profilevector.onrender.com/ws/questions/stream')
+    const ws = new WebSocket('ws://127.0.0.1:8000/ws/questions/stream');
+    // const ws = new WebSocket('wss://profilevector.onrender.com/ws/questions/stream')
 
     ws.onopen = () => {
       console.log('Connected to WebSocket server');

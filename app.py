@@ -10,7 +10,7 @@ from langchain_core.messages import HumanMessage, AIMessage
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://profile-vector.vercel.app/"],  # Allows all origins
+    allow_origins=["https://profile-vector.vercel.app/", "http://localhost:3000/"],  # Allows all origins
     allow_credentials=True,
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
@@ -35,7 +35,7 @@ async def process_question(question: Questions):
     return {'response': response}
 
 
-@app.websocket("/ws/questions")
+@app.websocket("/ws/questions/stream")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     rag_chain = RetrievalChain(username='harshkasat')
@@ -55,9 +55,8 @@ async def websocket_endpoint(websocket: WebSocket):
                 if response := chunk.get("answer"):
                     # Send the response back to the client
                     full_response += response
-                    await websocket.send_text(response)
             chat_history.append(AIMessage(content=full_response))
-
+            await websocket.send_text(full_response)
         except Exception as e:
             print(f"Error: {e}")
             break

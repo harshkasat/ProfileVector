@@ -50,13 +50,13 @@ def parsed_documents(username, pdf_path, website_url):
 
 
 # def main():
-#     username='harshkasat'
+#     github_username='harshkasat'
 #     pdf_path = "C:/Users/Zedmat/Downloads/Harsh Resume.pdf"
 #     website_url = 'https://machoharsh-tech.vercel.app/'
 
 #     # Parse documents
-#     extracted_data, repo_info, parsed_website, raw_text = parsed_documents(username, pdf_path, website_url)
-#     vector_document(username, extracted_data, repo_info, parsed_website, raw_text)
+#     extracted_data, repo_info, parsed_website, raw_text = parsed_documents(github_username, pdf_path, website_url)
+#     vector_document(github_username, extracted_data, repo_info, parsed_website, raw_text)
 
 
 # if __name__ == "__main__":
