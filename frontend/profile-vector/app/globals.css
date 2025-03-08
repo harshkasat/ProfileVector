@@ -2,41 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 45%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
-    --radius: 0.5rem;
-  }
+:root {
+  --terminal-bg: #1a1b1e;
+  --terminal-text: #33FF00;
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
+body {
+  background-color: var(--terminal-bg);
+  color: var(--terminal-text);
+  font-family: 'Courier New', Courier, monospace;
+}
 
-  body {
-    @apply bg-background text-foreground font-body;
-  }
+.terminal-input {
+  background-color: transparent;
+  border: none;
+  color: var(--terminal-text);
+  caret-color: var(--terminal-text);
+  font-family: 'Courier New', Courier, monospace;
+  width: 100%;
+  outline: none;
+}
 
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-heading;
+.terminal-line {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.cursor-blink {
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
   }
 }

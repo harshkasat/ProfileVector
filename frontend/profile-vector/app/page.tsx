@@ -1,115 +1,146 @@
-'use client'
+'use client';
 
-import { useState, useEffect, useRef } from 'react'
-import { Terminal } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react';
 
-function formatText(text: string) {
-  // Replace **bold** with <strong>bold</strong>
-  text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-  
-  // Replace URLs with clickable links
-  text = text.replace(
-    /(https?:\/\/[^\s]+)/g,
-    '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline">$1</a>'
-  )
-  
-  return text
-}
+export default function Home() {
+  const [history, setHistory] = useState<string[]>([
+    'Welcome to Terminal UI v1.0.0',
+    'Type "help" for available commands',
+    'Any other input will be sent as a query to the server',
+    '',
+  ]);
+  const [currentInput, setCurrentInput] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [socket, setSocket] = useState<WebSocket | null>(null);
 
-export default function Component() {
-  const [messages, setMessages] = useState<string[]>([
-    "Welcome to the Zedmate Terminal Chat. How can I assist you today?"
-  ])
-  const [input, setInput] = useState('')
-  const [socket, setSocket] = useState<WebSocket | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-
+  // Set up WebSocket connection
   useEffect(() => {
-    // Initialize WebSocket connection
-    const ws = new WebSocket('wss://profilevector.onrender.com/ws/questions')
-    // const ws = new WebSocket('ws://127.0.0.1:8000/ws/questions/stream')
-    
+    console.log("Initialize the websocket")
+    // const ws = new WebSocket('ws://127.0.0.1:8000/ws/questions/stream');
+    const ws = new WebSocket('wss://profilevector.onrender.com/ws/questions/stream')
+
     ws.onopen = () => {
-      console.log('Connected to the server')
-    }
-    
+      console.log('Connected to WebSocket server');
+      setHistory(prev => [...prev, 'Connected to WebSocket server', '']);
+    };
+
     ws.onmessage = (event) => {
-      setMessages(prev => {
-        const newMessages = [...prev]
-        const lastMessage = newMessages[newMessages.length - 1]
-        if (lastMessage.startsWith('🤖 ')) {
-          // Remove any newline characters and append the new chunk
-          newMessages[newMessages.length - 1] = lastMessage + event.data.replace(/\n/g, ' ')
-        } else {
-          newMessages.push('🤖 ' + event.data.replace(/\n/g, ' '))
-        }
-        return newMessages
-      })
-    }
+      setHistory(prev => {
+        const newHistory = [...prev];
+        const lastMessage = newHistory[newHistory.length - 1];
+          newHistory.push('🤖 ' + event.data.replace(/\n/g, ' '));
+        // }
+        return newHistory;
+      });
+    };
     
     ws.onerror = (error) => {
-      console.error('WebSocket error:', error)
-    }
+      console.error('WebSocket error:', error);
+      setHistory(prev => [...prev, 'Error: WebSocket connection failed', '']);
+    };
     
     ws.onclose = () => {
-      console.log('Disconnected from the server')
-    }
+      console.log('Disconnected from the server');
+      setHistory(prev => [...prev, 'Disconnected from WebSocket server', '']);
+    };
     
-    setSocket(ws)
+    setSocket(ws);
 
     return () => {
-      ws.close()
+      if (ws.readyState === 1) { 
+        ws.close();
     }
-  }, [])
+    };
+  }, []);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  const commands = {
+    help: () => [
+      'Available commands:',
+      '  clear    - Clear the terminal',
+      '  echo     - Echo back your input',
+      '  date     - Show current date and time',
+      '  help     - Show this help message',
+    ],
+    clear: () => [],
+    date: () => [new Date().toLocaleString()],
+    echo: (args: string) => [args],
+  };
+
+  const sendToServer = (message: string) => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(message);
+      return 
+    } else {
+      return ['Error: WebSocket not connected'];
+    }
+  };
+
+  const handleCommand = (input: string) => {
+    const [cmd, ...args] = input.trim().split(' ');
+    const argsStr = args.join(' ');
+  
+    if (cmd in commands) {
+      return commands[cmd as keyof typeof commands](argsStr);
+    } else {
+      // Send to server but don't return anything - the response will come through the WebSocket
+      sendToServer(input);
+      return []; // Return empty array as we don't want to add anything to history yet
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (input.trim() && socket) {
-      socket.send(input)
-      setMessages(prev => [...prev, `> ${input}`])
-      setInput('')
+    e.preventDefault();
+    if (!currentInput.trim()) return;
+
+    const newHistory = [
+      ...history,
+      `$ ${currentInput}`,
+      ...handleCommand(currentInput),
+      '',
+    ];
+
+    setHistory(currentInput.trim() === 'clear' ? [] : newHistory);
+    setCurrentInput('');
+  };
+
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTop = containerRef.current.scrollHeight;
     }
-  }
+  }, [history]);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-900">
-      <div className="w-full max-w-2xl bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-        <div className="flex items-center px-4 py-3 bg-gray-700">
-          <div className="flex space-x-2">
-            <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-            <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+    <main 
+      className="min-h-screen p-4 font-mono text-sm bg-black text-green-400"
+      onClick={() => inputRef.current?.focus()}
+    >
+      <div 
+        ref={containerRef}
+        className="max-h-screen overflow-auto"
+      >
+        {history.map((line, i) => (
+          <div key={i} className="whitespace-pre-wrap mb-1">
+            {line}
           </div>
-          <div className="ml-4 text-white font-semibold">Zedmate Terminal Chat</div>
-        </div>
-        <div className="h-96 overflow-y-auto p-4 space-y-2">
-          {messages.map((msg, index) => (
-            <div 
-              key={index} 
-              className={`text-sm ${msg.startsWith('>') ? 'text-blue-400' : 'text-green-400'}`}
-              dangerouslySetInnerHTML={{ __html: formatText(msg) }}
-            />
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
-        <form onSubmit={handleSubmit} className="flex items-center p-4 bg-gray-700">
-          <Terminal className="text-gray-400 mr-2" />
+        ))}
+        <form onSubmit={handleSubmit} className="flex">
+          <span>$&nbsp;</span>
           <input
+            ref={inputRef}
             type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message..."
-            className="flex-grow bg-transparent text-white placeholder-gray-500 outline-none"
+            value={currentInput}
+            onChange={(e) => setCurrentInput(e.target.value)}
+            className="flex-1 bg-transparent outline-none"
+            autoFocus
+            spellCheck="false"
           />
-          <button type="submit" className="ml-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
-            Send
-          </button>
         </form>
       </div>
-    </div>
-  )
+    </main>
+  );
 }
