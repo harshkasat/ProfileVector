@@ -7,7 +7,7 @@ app = FastAPI()
 
 from langchain_core.messages import HumanMessage, AIMessage
 
-
+# TODO: work in progress
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://profile-vector.vercel.app/", "http://localhost:3000/"],  # Allows all origins
